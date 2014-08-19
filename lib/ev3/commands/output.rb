@@ -13,7 +13,6 @@ module EV3
         validate_range!(nos, 'nos', 0x00..0x0F)
         validate_constant!(layer, 'layer', DaisyChainLayer)
 
-        self << command_type
         self << command
         self << layer.to_ev3_data
         self << nos.to_ev3_data
