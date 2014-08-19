@@ -17,9 +17,18 @@ module EV3
         @bytes = []
       end
 
+      # The command type.  Override if something other than CommandType::DIRECT_COMMAND_NO_REPLY
+      # @return [CommandType]
+      def command_type
+        CommandType::DIRECT_COMMAND_NO_REPLY
+      end
+
       # Converts the command to an array of bytes to send to the EV3
       def to_bytes
-        message = self.sequence_number.to_little_endian_byte_array(2) + variable_size_bytes + @bytes.clone
+        message = self.sequence_number.to_little_endian_byte_array(2) + 
+                    [command_type] + 
+                    variable_size_bytes + 
+                    @bytes.clone
 
         # The message is proceeded by the message length
         message.size.to_little_endian_byte_array(2) + message
