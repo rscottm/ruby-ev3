@@ -18,12 +18,6 @@ module EV3
         self << nos.to_ev3_data
       end
 
-      # The command type.  Override if something other than CommandType::DIRECT_COMMAND_NO_REPLY
-      # @return [CommandType]
-      def command_type
-        CommandType::DIRECT_COMMAND_NO_REPLY
-      end
-
       # The output command to run
       # @abstract
       # @return [ByteCodes]
