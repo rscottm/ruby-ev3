@@ -1,4 +1,5 @@
 require "ev3/motor"
+require "ev3/button"
 
 module EV3
   class Brick
@@ -54,7 +55,27 @@ module EV3
     def motor(motor_port)
       send("motor_#{motor_port.to_s.downcase}")
     end
+    
+    Button::constants.each do |button|
+      button_name = "button_#{button.downcase}"
+      variable_name = "@#{button_name}"
+      define_method(button_name) do
+        if instance_variable_defined?(variable_name)
+          instance_variable_get(variable_name)
+        else
+          instance_variable_set(variable_name, Button.new(Button::const_get(button), self))
+        end
+      end
+    end    
 
+    # Fetches the button
+    # @param [sym in [:left, :right, :up, :down, :back, :enter]]
+    # @example get motor attached to port a
+    #   button_left = brick.button(:left)
+    def button(button_name)
+      send("button_#{button_name.to_s.downcase}")
+    end
+    
     # Execute the command
     #
     # @param [instance subclassing Commands::Base] command to execute
