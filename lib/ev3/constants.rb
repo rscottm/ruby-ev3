@@ -1,4 +1,12 @@
 module EV3
+	module ArgumentType
+		BYTE = 0x81         # 1 byte
+		SHORT = 0x82        # 2 bytes
+		INT = 0x83          # 4 bytes
+		STRING = 0x84       # null-terminated string
+    GLOBAL_INDEX = 0xe1 # Special
+  end
+
   module ParameterFormat
     SHORT = 0x00
     LONG = 0x80
@@ -112,6 +120,8 @@ module EV3
     STRING = 0x7D
     MEMORY_WRITE = 0x7E
     MEMORY_READ = 0x7F
+    # UI
+		UI_BUTTON = 0x83
     # Sound
     SOUND = 0x94
     SOUND_TEST = 0x95
@@ -162,6 +172,10 @@ module EV3
     MAILBOX_TEST = 0xDB
     MAILBOX_READY = 0xDC
     MAILBOX_CLOSE = 0xDD
+  end
+  
+  module ButtonSubCodes
+    PRESSED = 9
   end
 
   module SoundSubCodes
