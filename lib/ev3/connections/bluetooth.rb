@@ -33,6 +33,18 @@ module EV3
           @serial_port.putc b
         end
       end
+
+      # Read the reply from the bluetooth connection
+      #
+      # @param [instance subclassing Commands::Base] command to process the reply
+      def perform_read(command)
+        bytes = []
+        size = @serial_port.readbyte | (@serial_port.readbyte << 8)
+        1.upto(size) do |i|
+          bytes << @serial_port.readbyte
+        end
+        command.reply = bytes        
+      end
     end
 
   end
