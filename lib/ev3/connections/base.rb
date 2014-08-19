@@ -11,12 +11,19 @@ module EV3
       end
 
       def write(command)
+        @commands_sent += 1
         command.sequence_number = @commands_sent
         perform_write(command)
-        @commands_sent += 1
+        puts command.command_type & CommandType::WITHOUT_REPLY
+        perform_read(command) if command.command_type & CommandType::WITHOUT_REPLY == 0
+        self
       end
 
       def perform_write(command)
+        raise NotImplementedError
+      end
+
+      def perform_read(command)
         raise NotImplementedError
       end
     end
