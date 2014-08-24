@@ -16,10 +16,6 @@ module EV3
       @reply_size = 0
     end
     
-    def command_type
-      @type
-    end
-    
     def has_reply?
       @has_reply
     end
