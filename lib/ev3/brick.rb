@@ -1,11 +1,17 @@
 require "ev3/motor"
 require "ev3/button"
 
+require 'ev3/command'
+require 'ev3/command_component'
+
+require 'ev3/actions/brick'
+
 module EV3
   class Brick
     attr_reader :connection, :layer
 
     include EV3::Validations::Type
+    include EV3::Actions::Brick
 
     # Create a new brick connection
     #
@@ -27,13 +33,12 @@ module EV3
 
     # Play a short beep on the EV3
     def beep
-      self.execute(Commands::SoundTone.new)
+      play_tone(50, 1000, 500)
     end
 
     # Play a tone on the EV3 using the specified options
     def play_tone(volume, frequency, duration)
-      command = Commands::SoundTone.new(volume, frequency, duration)
-      self.execute(command)
+      self.execute(_play_sound(volume, frequency, duration))
     end
 
     Motor::constants.each do |motor|
@@ -80,7 +85,7 @@ module EV3
     #
     # @param [instance subclassing Commands::Base] command to execute
     def execute(command)
-      validate_type!(command, 'command', EV3::Commands::Base)
+      command = Command.new.add_component(command) if command.is_a?(CommandComponent)
       self.connection.write(command)
     end
   end
