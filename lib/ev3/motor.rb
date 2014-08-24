@@ -1,9 +1,13 @@
+require 'ev3/actions/motor'
+
 module EV3
   # High-level interface for interacting with Motors.
   # @todo Implement methods to read motor speed and tacho information.
   class Motor
     include EV3::Validations::Constant
     include EV3::Validations::Type
+    
+    include EV3::Actions::Motor
 
     A = 1
     B = 2
@@ -30,15 +34,15 @@ module EV3
     # Starts the motor.  Default speed is zero, and should be controlled with {#speed}.
     def start
       @on = true
-      brick.execute(Commands::OutputStart.new(motor, layer))
+      brick.execute(_start)
     end
 
     # Stop the motor
     # @param [true, false] brake stops the motor faster and holds it in position if true.
     def stop(brake = false)
       @on = false
-      brick.execute(Commands::OutputStop.new(motor, brake, layer))
-    end
+      brick.execute(_stop(brake))
+   end
 
     # @return [Boolean] true if the motor has started, false otherwise.
     def on?
@@ -59,15 +63,19 @@ module EV3
     def speed=(new_speed)
       if @speed.nil? || new_speed != @speed
         @speed = new_speed
-        brick.execute(Commands::OutputSpeed.new(motor, new_speed, layer))
+        brick.execute(_speed(new_speed))
       end
+    end
+
+    def time_speed(speed, timing, brake=false)
+      brick.execute(_time_speed(speed, timing, brake))
     end
 
     # Causes the motor to run in the reverse direction.
     # @note This doesn't change the speed reading, just the direction the motor spins.  In other words, positive
     #   speeds result in the motor spinning in the opposite direction.
     def reverse
-      brick.execute(Commands::OutputPolarity.new(motor, Commands::OutputPolarity::OPPOSITE, layer))
+      brick.execute(_polarity)
     end
 
     private
