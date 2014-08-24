@@ -14,7 +14,7 @@ module EV3
         @commands_sent += 1
         command.sequence_number = @commands_sent
         perform_write(command)
-        perform_read(command) if command.command_type & CommandType::WITHOUT_REPLY == 0
+        perform_read(command) if command.has_reply?
         self
       end
 
