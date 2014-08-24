@@ -1,7 +1,13 @@
+require 'ev3/actions/button'
+
 module EV3
   class Button
     include EV3::Validations::Constant
     include EV3::Validations::Type
+    
+    include EV3::Actions::Button
+    
+    attr_writer :pressed
 
 		UP    = 1
 		ENTER = 2
@@ -19,11 +25,10 @@ module EV3
     end
     
     def pressed?
-      cmd = Commands::InputButtonPressed.new(button)
-      brick.execute(cmd)
-      cmd.pressed?
+      brick.execute(_pressed?)
+      @pressed
     end
-
+    
     private
 
     attr_reader :brick, :button
