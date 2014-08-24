@@ -1,4 +1,5 @@
 require "ev3/motor"
+require "ev3/port"
 require "ev3/button"
 
 require 'ev3/command'
@@ -59,6 +60,22 @@ module EV3
     #   motor_a = brick.motor(:a)
     def motor(motor_port)
       send("motor_#{motor_port.to_s.downcase}")
+    end
+    
+    Port::constants.each do |port|
+      port_name = "port_#{port.downcase}"
+      variable_name = "@#{port_name}"
+      define_method(port_name) do
+        if instance_variable_defined?(variable_name)
+          instance_variable_get(variable_name)
+        else
+          instance_variable_set(variable_name, Port.new(Port::const_get(port), self))
+        end
+      end
+    end    
+
+    def port(port_name)
+      send("port_#{port_name.to_s.downcase}")
     end
     
     Button::constants.each do |button|
