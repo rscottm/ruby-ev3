@@ -10,7 +10,15 @@ module EV3
     SIZE_OF = {
                 :byte   => 1,
                 :short  => 2,
-                :int    => 4                    
+                :int    => 4,
+                :float  => 4
+              }
+
+    UNPACK_CONVERSION = {
+                :byte   => "c",
+                :short  => "v",
+                :int    => "V",
+                :float  => "F"
               }
 
     def initialize(object, type, subtype=nil)
@@ -70,12 +78,9 @@ module EV3
     def reply=(bytes)
       index = 0
       @reply_types.each do |type, setter|
-        data = case type
-        when :byte then bytes[index]
-        when :short then (bytes[index] | (bytes[index+1] << 8)) 
-        when :int then (bytes[index] | (bytes[index+1] << 8) | (bytes[index+2] << 16) | (bytes[index+3] << 24))           
-        end
-        self << @object.send(setter, data)
+        my_bytes = bytes[index..(index + SIZE_OF[type] - 1)]
+        data = my_bytes.pack("C*").unpack(UNPACK_CONVERSION[type])[0]
+        @object.send(setter, data)
         index += SIZE_OF[type]
       end      
     end
