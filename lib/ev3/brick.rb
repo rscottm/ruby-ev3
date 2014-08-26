@@ -1,4 +1,5 @@
 require "ev3/motor"
+require "ev3/port"
 require "ev3/button"
 
 require 'ev3/command'
@@ -29,6 +30,17 @@ module EV3
     # Close the connection to the EV3
     def disconnect
       self.connection.disconnect
+    end
+    
+    def device_list(layer=@layer)
+      c = _device_list
+      self.execute(c)
+      @device_list = c.replies[0].map{|i| DEVICE_TYPES[i]}
+      @device_list = [[@device_list[0,4],  @device_list[16,4]], 
+                      [@device_list[4,4],  @device_list[20,4]], 
+                      [@device_list[8,4],  @device_list[24,4]], 
+                      [@device_list[12,4], @device_list[28,4]]]
+      layer == -1 ? @device_list : @device_list[layer]
     end
 
     # Play a short beep on the EV3
@@ -61,6 +73,22 @@ module EV3
       send("motor_#{motor_port.to_s.downcase}")
     end
     
+    Port::constants.each do |port|
+      port_name = "port_#{port.downcase}"
+      variable_name = "@#{port_name}"
+      define_method(port_name) do
+        if instance_variable_defined?(variable_name)
+          instance_variable_get(variable_name)
+        else
+          instance_variable_set(variable_name, Port.new(Port::const_get(port), self))
+        end
+      end
+    end    
+
+    def port(port_name)
+      send("port_#{port_name.to_s.downcase}")
+    end
+    
     Button::constants.each do |button|
       button_name = "button_#{button.downcase}"
       variable_name = "@#{button_name}"
@@ -85,7 +113,7 @@ module EV3
     #
     # @param [instance subclassing Commands::Base] command to execute
     def execute(command)
-      command = Command.new.add_component(command) if command.is_a?(CommandComponent)
+      command = Command.new.add_component(command) if command.is_a?(CommandComponent) or command.is_a?(Array)
       self.connection.write(command)
     end
   end
