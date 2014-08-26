@@ -1,4 +1,27 @@
 module EV3
+  DEVICE_TYPES = {
+    1    => :nxt_touch,
+    2    => :nxt_light,
+    3    => :nxt_sound,
+    4    => :nxt_color,
+    5    => :nxt_ultrasonic,
+    6    => :nxt_temperature,
+
+    7    => :l_motor,
+    8    => :m_motor,
+
+    16   => :touch,
+    29   => :color,
+    30   => :ultrasonic,
+    32   => :gyroscope,
+    33   => :infrared,
+
+    0x7d => :initializing,
+    0x7e => :empty,
+    0x7f => :wrong_port,
+    0x7f => :unknown
+  }
+
 	module ArgumentType
 		BYTE = 0x81         # 1 byte
 		SHORT = 0x82        # 2 bytes
