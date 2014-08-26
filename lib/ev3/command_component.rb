@@ -5,7 +5,7 @@ module EV3
     include EV3::Validations::Constant
     include EV3::Validations::Type
 
-    attr_reader :reply_size
+    attr_reader :reply_size, :replies
 
     SIZE_OF = {
                 :byte   => 1,
@@ -48,10 +48,9 @@ module EV3
       self
     end
 
-    def add_reply(type, setter)
-      # TODO: Figure out how to handle null terminated strings
-      @reply_types << [type, setter]
-      @reply_size += SIZE_OF[type]
+    def add_reply(type, setter=nil, buffer_size=0)
+      @reply_types << [type, setter, buffer_size]
+      @reply_size += [:string, :array].include?(type) ? buffer_size : SIZE_OF[type]
       self
     end
 
@@ -67,22 +66,38 @@ module EV3
         self << value.to_little_endian_byte_array(SIZE_OF[type]) 
       end
 
-      @reply_types.each do |type, setter|
+      @reply_types.each do |type, setter, buffer_size|
         self << ArgumentType::GLOBAL_INDEX
         self << index
-        index += SIZE_OF[type]
+        index += [:string, :array].include?(type) ? buffer_size : SIZE_OF[type]
       end
       @bytes
     end
 
     def reply=(bytes)
+      @replies = []
       index = 0
-      @reply_types.each do |type, setter|
-        my_bytes = bytes[index..(index + SIZE_OF[type] - 1)]
-        data = my_bytes.pack("C*").unpack(UNPACK_CONVERSION[type])[0]
-        @object.send(setter, data)
-        index += SIZE_OF[type]
-      end      
+      @reply_types.each do |type, setter, buffer_size|
+        size = [:string, :array].include?(type) ? buffer_size : SIZE_OF[type]
+        data = bytes[index..(index + size - 1)]
+        unless type == :array
+          data = data[0..(data.find_index(0))] if type == :string 
+          data = data.pack("C*")
+          data = type == :string ? data.strip : data.unpack(UNPACK_CONVERSION[type])[0]
+        end
+        @replies << data
+        @object.send(setter, data) if setter
+        index += size
+      end
+      @replies
+    end
+    
+    def replies
+      @replies
+    end
+ 
+    def reply(num=0)
+      @replies[num]
     end
   end
 end
