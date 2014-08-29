@@ -17,7 +17,7 @@ module EV3
       def _device_list
         CommandComponent.new(nil, ByteCodes::INPUT_DEVICE_LIST)
           .add_parameter(:byte, 0x20) 
-          .add_reply(:array, nil, 0x20)
+          .add_reply(:byte, nil, 0x20)
           .add_reply(:byte)
       end
       
