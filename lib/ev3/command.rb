@@ -5,7 +5,7 @@ module EV3
     include EV3::Validations::Constant
     include EV3::Validations::Type
 
-    attr_reader :type
+    attr_reader :type, :replies
     attr_accessor :sequence_number
     
     def initialize(type = :direct)
@@ -84,13 +84,20 @@ module EV3
 
       # The remaining bytes are the reply
       raise IncorrectReplySize if bytes.size != @reply_size
+      
+      @replies = []
 
       @components.each do |c|
         if c.has_reply?
            c.reply = bytes[0..(c.reply_size-1)]
            bytes = bytes[c.reply_size..-1]
+           @replies += c.replies
         end
       end
+    end
+    
+    def reply
+      replies[0] if @replies
     end
 
     # Raises an exception if the value isn't found in the range
