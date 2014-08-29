@@ -20,6 +20,7 @@ module EV3
               }
 
     UNPACK_CONVERSION = {
+                :boolean => "c*",
                 :byte   => "c*",
                 :ubyte  => "C*",
                 :short  => "s<*",
