@@ -8,17 +8,25 @@ module EV3
     attr_reader :reply_size, :replies
 
     SIZE_OF = {
+                :boolean => 1,
                 :byte   => 1,
+                :ubyte  => 1,
                 :short  => 2,
+                :ushort => 2,
                 :int    => 4,
-                :float  => 4
+                :uint   => 4,
+                :float  => 4,
+                :string => 1
               }
 
     UNPACK_CONVERSION = {
-                :byte   => "c",
-                :short  => "v",
-                :int    => "V",
-                :float  => "F"
+                :byte   => "c*",
+                :ubyte  => "C*",
+                :short  => "s<*",
+                :ushort => "S<*",
+                :int    => "l<*",
+                :uint   => "L<*",
+                :float  => "e*"
               }
 
     def initialize(object, type, subtype=nil)
@@ -48,9 +56,9 @@ module EV3
       self
     end
 
-    def add_reply(type, setter=nil, buffer_size=0)
-      @reply_types << [type, setter, buffer_size]
-      @reply_size += [:string, :array].include?(type) ? buffer_size : SIZE_OF[type]
+    def add_reply(type, setter=nil, buffer_or_array_size=0)
+      @reply_types << [type, setter, buffer_or_array_size]
+      @reply_size += buffer_or_array_size > 0 ? (buffer_or_array_size * SIZE_OF[type]) : SIZE_OF[type]
       self
     end
 
@@ -61,15 +69,19 @@ module EV3
       self << @subtype if @subtype
 
       @parameters.each do |type, value_or_getter|
-        self << ArgumentType.const_get(type.to_s.upcase)
         value = value_or_getter.is_a?(Symbol) ? @object.send(value_or_getter) : value_or_getter
-        self << value.to_little_endian_byte_array(SIZE_OF[type]) 
+        value = [value] unless value.is_a?(Array)
+        value.each do |v|
+          self << ArgumentType.const_get(type.to_s.upcase)
+          v = v.to_ev3_data if type == :boolean
+          self << v.to_little_endian_byte_array(SIZE_OF[type])
+        end
       end
 
-      @reply_types.each do |type, setter, buffer_size|
+      @reply_types.each do |type, setter, buffer_or_array_size|
         self << ArgumentType::GLOBAL_INDEX
         self << index
-        index += [:string, :array].include?(type) ? buffer_size : SIZE_OF[type]
+        index += buffer_or_array_size > 0 ? (buffer_or_array_size * SIZE_OF[type]) : SIZE_OF[type]
       end
       @bytes
     end
@@ -77,13 +89,17 @@ module EV3
     def reply=(bytes)
       @replies = []
       index = 0
-      @reply_types.each do |type, setter, buffer_size|
-        size = [:string, :array].include?(type) ? buffer_size : SIZE_OF[type]
+      @reply_types.each do |type, setter, buffer_or_array_size|
+        size = buffer_or_array_size > 0 ? (buffer_or_array_size * SIZE_OF[type]) : SIZE_OF[type]
         data = bytes[index..(index + size - 1)]
-        unless type == :array
-          data = data[0..(data.find_index(0))] if type == :string 
-          data = data.pack("C*")
-          data = type == :string ? data.strip : data.unpack(UNPACK_CONVERSION[type])[0]
+        data = data[0..(data.find_index(0))] if type == :string 
+        data = data.pack("C*")
+        if type == :string
+          data.strip!
+        else
+          data = data.unpack(UNPACK_CONVERSION[type])
+          data = data[0] if buffer_or_array_size == 0 
+          data = data == 1 if type == :boolean
         end
         @replies << data
         @object.send(setter, data) if setter
