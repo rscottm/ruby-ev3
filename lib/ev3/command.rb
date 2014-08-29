@@ -79,7 +79,7 @@ module EV3
       # Third byte is the reply_type
       raise NoReplyType if bytes.size == 0
       reply = bytes.shift
-      raise ErrorReply if reply == @reply_error
+      raise ErrorReply if reply == @error_type
       raise IncorrectReplyType unless reply == @reply_type
 
       # The remaining bytes are the reply
