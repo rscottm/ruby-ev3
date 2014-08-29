@@ -23,9 +23,13 @@ module EV3
   }
 
 	module ArgumentType
+		BOOLEAN = 0x81         # 1 byte
 		BYTE = 0x81         # 1 byte
+		UBYTE = 0x81        # 1 byte
 		SHORT = 0x82        # 2 bytes
+		USHORT = 0x82       # 2 bytes
 		INT = 0x83          # 4 bytes
+		UINT = 0x83         # 4 bytes
 		STRING = 0x84       # null-terminated string
     GLOBAL_INDEX = 0xe1 # Special
   end
