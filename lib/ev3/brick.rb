@@ -35,7 +35,7 @@ module EV3
     def device_list(layer=@layer)
       c = _device_list
       self.execute(c)
-      unless c.replies[1] == 0
+      if @device_list.nil? or c.replies[1] != 0
         @device_list = c.replies[0].map{|i| DEVICE_TYPES[i]}
         @device_list = [[@device_list[0,4],  @device_list[16,4]], 
                         [@device_list[4,4],  @device_list[20,4]], 
