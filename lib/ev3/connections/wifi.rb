@@ -43,6 +43,14 @@ module EV3
         @tcp_socket.send(command.to_bytes.pack('C*'), 0)
       end
 
+      # Read the reply
+      #
+      # @param [instance subclassing Commands::Base] command to process the reply
+      def perform_read(command)
+        size = @tcp_socket.recv(2).unpack("S<*")[0]
+        command.reply = @tcp_socket.recv(size).unpack("C*")
+      end
+
       private
 
       # Listen for the EV3 and request it to open its TCP port.
