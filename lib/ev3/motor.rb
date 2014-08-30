@@ -13,7 +13,10 @@ module EV3
     B = 2
     C = 4
     D = 8
-
+    
+    AD = A | D
+    BC = B | C
+    
     # Create a new motor and perform some initial setup, stopping the motor and zeroing the speed.
     # @param [Motor] motor A, B, C or D constant, corresponding to the EV3 motor ports.
     # @param [EV3::Brick] brick the brick the motor is connected to.
@@ -30,7 +33,7 @@ module EV3
       self.speed = 0
       stop
     end
-
+    
     # Starts the motor.  Default speed is zero, and should be controlled with {#speed}.
     def start
       @on = true
@@ -42,7 +45,35 @@ module EV3
     def stop(brake = false)
       @on = false
       brick.execute(_stop(brake))
-   end
+    end
+
+    def reset
+      brick.execute(_reset)
+    end
+
+    def ready
+      brick.execute(_ready)
+    end
+
+    def test
+      brick.execute(c = _test)
+      c.reply == 0 ? :ready : :busy
+    end
+
+    def clear_count
+      brick.execute(_clear_count)
+    end
+
+    def get_count
+      brick.execute(_get_count)
+    end
+
+    def read
+      rv = brick.execute(c = _read)
+      puts "Speed = #{c.replies[0]}"
+      puts "Degrees = #{c.replies[1]}"
+      rv
+    end
 
     # @return [Boolean] true if the motor has started, false otherwise.
     def on?
@@ -66,9 +97,33 @@ module EV3
         brick.execute(_speed(new_speed))
       end
     end
+    
+    def power=(new_power)
+      brick.execute(_power(new_power))
+    end
 
     def time_speed(speed, timing, brake=false)
       brick.execute(_time_speed(speed, timing, brake))
+    end
+
+    def step_power(power, steps, brake=false)
+      brick.execute(_step_power(power, steps, brake))
+    end
+
+    def time_power(power, timing, brake=false)
+      brick.execute(_time_power(power, timing, brake))
+    end
+
+    def step_speed(speed, steps, brake=false)
+      brick.execute(_step_speed(speed, steps, brake))
+    end
+
+    def step_sync(speed, turn, step, brake=false)
+      brick.execute(_step_sync(speed, turn, step, brake))
+    end
+
+    def time_sync(speed, turn, time, brake=false)
+      brick.execute(_time_sync(speed, turn, time, brake))
     end
 
     # Causes the motor to run in the reverse direction.
