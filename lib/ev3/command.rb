@@ -5,7 +5,7 @@ module EV3
     include EV3::Validations::Constant
     include EV3::Validations::Type
 
-    attr_reader :type
+    attr_reader :type, :replies
     attr_accessor :sequence_number
     
     def initialize(type = :direct)
@@ -14,10 +14,8 @@ module EV3
       @local_variables = @global_variables = 0
       @has_reply = false
       @reply_size = 0
-    end
-    
-    def command_type
-      @type
+      @reply_type = 0
+      @error_type = 0
     end
     
     def has_reply?
@@ -29,7 +27,11 @@ module EV3
     end
     
     def add_component(component)
-      @components << component
+      if component.is_a?(Array)
+        @components += component
+      else
+        @components << component
+      end
       self
     end
     
@@ -49,7 +51,12 @@ module EV3
       end
       
       @global_variables = @reply_size      
-      @type |= CommandType::WITHOUT_REPLY unless @has_reply
+      if @has_reply
+        @reply_type = @type == CommandType::DIRECT_COMMAND ? CommandType::DIRECT_REPLY : CommandType::SYSTEM_REPLY
+        @error_type = @type == CommandType::DIRECT_COMMAND ? CommandType::DIRECT_REPLY_WITH_ERROR : CommandType::SYSTEM_REPLY_WITH_ERROR
+      else
+        @type |= CommandType::WITHOUT_REPLY
+      end
       
       message = self.sequence_number.to_little_endian_byte_array(2) + 
                   [type] + 
@@ -70,21 +77,27 @@ module EV3
       end
 
       # Third byte is the reply_type
-      if bytes.size >= 1
-        raise IncorrectReplyType unless bytes.shift == CommandType::DIRECT_REPLY
-      else
-        raise NoReplyType
-      end
+      raise NoReplyType if bytes.size == 0
+      reply = bytes.shift
+      raise ErrorReply if reply == @error_type
+      raise IncorrectReplyType unless reply == @reply_type
 
       # The remaining bytes are the reply
       raise IncorrectReplySize if bytes.size != @reply_size
+      
+      @replies = []
 
       @components.each do |c|
         if c.has_reply?
            c.reply = bytes[0..(c.reply_size-1)]
            bytes = bytes[c.reply_size..-1]
+           @replies += c.replies
         end
       end
+    end
+    
+    def reply
+      replies[0] if @replies
     end
 
     # Raises an exception if the value isn't found in the range

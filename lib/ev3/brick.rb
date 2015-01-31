@@ -31,7 +31,37 @@ module EV3
     def disconnect
       self.connection.disconnect
     end
+    
+    def device_list(layer=@layer)
+      c = _device_list
+      self.execute(c)
+      if @device_list.nil? or c.replies[1] != 0
+        @device_list = c.replies[0].map{|i| DEVICE_TYPES[i]}
+        @device_list = [[@device_list[0,4],  @device_list[16,4]], 
+                        [@device_list[4,4],  @device_list[20,4]], 
+                        [@device_list[8,4],  @device_list[24,4]], 
+                        [@device_list[12,4], @device_list[28,4]]]
+      end
+      layer == -1 ? @device_list : @device_list[layer]
+    end
 
+    def poll_buttons(interval = 0.1, &block)
+      command = Button.constants.map{|b| self.send("button_#{b.downcase}")._pressed?}
+      Button.on_button_changed = block if block_given?
+      @stop_polling = false
+      
+      Thread.new do
+        while(not @stop_polling)
+          self.execute(command)
+          sleep(interval)
+        end
+      end.run
+    end
+    
+    def stop_polling
+      @stop_polling = true
+    end
+          
     # Play a short beep on the EV3
     def beep
       play_tone(50, 1000, 500)
@@ -102,8 +132,9 @@ module EV3
     #
     # @param [instance subclassing Commands::Base] command to execute
     def execute(command)
-      command = Command.new.add_component(command) if command.is_a?(CommandComponent)
+      command = Command.new.add_component(command) if command.is_a?(CommandComponent) or command.is_a?(Array)
       self.connection.write(command)
+      command.reply
     end
   end
 end

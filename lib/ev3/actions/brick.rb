@@ -14,6 +14,13 @@ module EV3
         raise(ArgumentError, "#{variable_name} should be between #{range.min} and #{range.max}") unless range.include?(value)
       end
 
+      def _device_list
+        CommandComponent.new(nil, ByteCodes::INPUT_DEVICE_LIST)
+          .add_parameter(:byte, 0x20) 
+          .add_reply(:byte, nil, 0x20)
+          .add_reply(:byte)
+      end
+      
       def _base(code, subcode=nil)
         CommandComponent.new(self, code, subcode)
       end

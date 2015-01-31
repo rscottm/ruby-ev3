@@ -4,7 +4,6 @@ require "ev3/core_extensions"
 require "ev3/validations"
 
 require "ev3/brick"
-require "ev3/commands"
 require "ev3/constants"
 require "ev3/version"
 
