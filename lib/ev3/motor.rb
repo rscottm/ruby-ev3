@@ -70,8 +70,7 @@ module EV3
 
     def read
       rv = brick.execute(c = _read)
-      puts "Speed = #{c.replies[0]}"
-      puts "Degrees = #{c.replies[1]}"
+      puts "Speed = #{c.replies[0]}; Degrees = #{c.replies[1]}"
       rv
     end
 
@@ -84,7 +83,8 @@ module EV3
     # @note This is not necessarily the speed the motor is actually running at.
     # @note This is zero when the motor is stopped.
     def speed
-      on? ? @speed : 0
+      #on? ? @speed : 0
+      brick.execute(_read)
     end
 
     # Sets the speed of the motor.
@@ -101,9 +101,14 @@ module EV3
     def power=(new_power)
       brick.execute(_power(new_power))
     end
+    
+    def move(hash)
+      brick.execute(_move(hash))
+    end
 
     def time_speed(speed, timing, brake=false)
-      brick.execute(_time_speed(speed, timing, brake))
+#      brick.execute(_time_speed(speed, timing, brake))
+      brick.execute(_move(time:timing, speed:speed, brake:brake))
     end
 
     def step_power(power, steps, brake=false)
