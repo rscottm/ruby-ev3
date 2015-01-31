@@ -1,19 +1,10 @@
 module EV3
   module Actions
     module Brick
+      include EV3::Validations::Range
+
       private
       
-      # TODO: Move into a validations module
-      # 
-      # Raises an exception if the value isn't found in the range
-      #
-      # @param [Integer] value to check against the range
-      # @param [String] variable_name for the exception message
-      # @param [Range<Integer>] range the value should be in
-      def validate_range!(value, variable_name, range)
-        raise(ArgumentError, "#{variable_name} should be between #{range.min} and #{range.max}") unless range.include?(value)
-      end
-
       def _device_list
         CommandComponent.new(nil, ByteCodes::INPUT_DEVICE_LIST)
           .add_parameter(:byte, 0x20) 
