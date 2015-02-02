@@ -20,17 +20,35 @@ module EV3
     def initialize(connection)
       @connection = connection
       @layer = DaisyChainLayer::EV3
+      connect
+    end
+
+    ############################################################################
+    #
+    # Connection
+    # 
+
+    # Check to see if connected to the EV3
+    def connected?
+      self.connection.connected?
     end
 
     # Connect to the EV3
     def connect
-      self.connection.connect
+      self.connection.connect unless connected?
     end
 
     # Close the connection to the EV3
     def disconnect
-      self.connection.disconnect
+      self.connection.disconnect if connected?
     end
+    
+    ############################################################################
+    #
+    # Devices
+    # 
+    # Check what's attached to each port
+    #
     
     def device_list(layer=@layer)
       c = _device_list
@@ -45,23 +63,11 @@ module EV3
       layer == -1 ? @device_list : @device_list[layer]
     end
 
-    def poll_buttons(interval = 0.1, &block)
-      command = Button.constants.map{|b| self.send("button_#{b.downcase}")._pressed?}
-      Button.on_button_changed = block if block_given?
-      @stop_polling = false
-      
-      Thread.new do
-        while(not @stop_polling)
-          self.execute(command)
-          sleep(interval)
-        end
-      end.run
-    end
+    ############################################################################
+    #
+    # Sound
+    #
     
-    def stop_polling
-      @stop_polling = true
-    end
-          
     # Play a short beep on the EV3
     def beep
       play_tone(50, 1000, 500)
@@ -72,6 +78,11 @@ module EV3
       self.execute(_play_sound(volume, frequency, duration))
     end
 
+    ############################################################################
+    #
+    # Motors
+    #
+    
     Motor::constants.each do |motor|
       motor_name = "motor_#{motor.downcase}"
       variable_name = "@#{motor_name}"
@@ -92,6 +103,11 @@ module EV3
       send("motor_#{motor_port.to_s.downcase}")
     end
     
+    ############################################################################
+    #
+    # Ports
+    #
+    
     Port::constants.each do |port|
       port_name = "port_#{port.downcase}"
       variable_name = "@#{port_name}"
@@ -104,9 +120,18 @@ module EV3
       end
     end    
 
+    # Fetches the port attached to the specified port name
+    # @param [sym in [:one, :two, :three, :four, :a, :b, :c, :d]] port_name
+    # @example get port related to port a
+    #   port_a = brick.port(:a)
     def port(port_name)
       send("port_#{port_name.to_s.downcase}")
     end
+    
+    ############################################################################
+    #
+    # Buttons
+    #
     
     Button::constants.each do |button|
       button_name = "button_#{button.downcase}"
@@ -122,13 +147,32 @@ module EV3
 
     # Fetches the button
     # @param [sym in [:left, :right, :up, :down, :back, :enter]]
-    # @example get motor attached to port a
+    # @example get left button
     #   button_left = brick.button(:left)
     def button(button_name)
       send("button_#{button_name.to_s.downcase}")
     end
     
-    # Execute the command
+    def poll_buttons(interval = 0.1, &block)
+      command = Button.constants.map{|b| self.send("button_#{b.downcase}")._pressed?}
+      Button.on_button_changed = block if block_given?
+      @stop_polling = false
+      
+      Thread.new do
+        while(not @stop_polling)
+          self.execute(command)
+          sleep(interval)
+        end
+      end.run
+    end
+    
+    def stop_polling_buttons
+      @stop_polling = true
+    end
+          
+    ############################################################################
+    #
+    # Execute a command
     #
     # @param [instance subclassing Commands::Base] command to execute
     def execute(command)
