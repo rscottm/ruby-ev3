@@ -19,16 +19,19 @@ module EV3
         @serial_port = ::SerialPort.new(@device, 57600, 8, 1, SerialPort::NONE)
         @serial_port.flow_control = ::SerialPort::HARD
         @serial_port.read_timeout = 5000
+        @connected = true
       end
 
       def disconnect
         @serial_port.close
+        @connected = false
       end
 
       # Write the command to the bluetooth connection
       #
       # @param [instance subclassing Commands::Base] command to execute
       def perform_write(command)
+        raise(ConnectionError, "You're not connected yet!") unless connected?        
         command.to_bytes.each do |b|
           @serial_port.putc b
         end
@@ -38,6 +41,7 @@ module EV3
       #
       # @param [instance subclassing Commands::Base] command to process the reply
       def perform_read(command)
+        raise(ConnectionError, "You're not connected yet!") unless connected?        
         bytes = []
         size = @serial_port.readbyte | (@serial_port.readbyte << 8)
         1.upto(size) do |i|
