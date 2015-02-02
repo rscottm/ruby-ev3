@@ -4,6 +4,11 @@ module EV3
 
       def initialize
         @commands_sent = 0
+        @connected = false
+      end
+      
+      def connected?
+        @connected
       end
 
       def connect
