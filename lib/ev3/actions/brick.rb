@@ -2,6 +2,7 @@ module EV3
   module Actions
     module Brick
       include EV3::Validations::Range
+      include EV3::Validations::Constant
 
       private
       
@@ -25,6 +26,13 @@ module EV3
           .add_parameter(:byte, volume)
           .add_parameter(:short, frequency)
           .add_parameter(:short, duration)
+      end
+
+      def _led_pattern(pattern)
+        validate_constant!(pattern, 'pattern', EV3::LedPattern)
+
+        _base(ByteCodes::UI_LED, LedSubCodes::WRITE)
+          .add_parameter(:byte, pattern)
       end
     end
   end
