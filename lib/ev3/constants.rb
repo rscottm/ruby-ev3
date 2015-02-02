@@ -148,6 +148,7 @@ module EV3
     MEMORY_WRITE = 0x7E
     MEMORY_READ = 0x7F
     # UI
+		UI_LED = 0x82
 		UI_BUTTON = 0x83
     # Sound
     SOUND = 0x94
@@ -201,6 +202,10 @@ module EV3
     MAILBOX_CLOSE = 0xDD
   end
   
+  module LedSubCodes
+    WRITE = 0x1b
+  end
+
   module ButtonSubCodes
     PRESSED = 9
   end
@@ -288,5 +293,18 @@ module EV3
     INIT32 = 10
     INIT_F = 11
     SIZE = 12
+  end
+  
+  module LedPattern
+    OFF = 0
+    GREEN = 1
+    RED = 2
+    ORANGE = 3
+    GREEN_FLASH = 4
+    RED_FLASH = 5
+    ORANGE_FLASH = 6
+    GREEN_PULSE = 7
+    RED_PULSE = 8
+    ORANGE_PULSE = 9
   end
 end
