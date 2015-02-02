@@ -28,12 +28,14 @@ module EV3
       def connect
         locate_ev3
         connect_to_ev3
+        @connected = true
       end
 
       # Close the connection to the EV3
       # @note If the EV3 isn't disconnected, it can refuse later connections.
       def disconnect
         @tcp_socket.close
+        @connected = false
       end
 
       # Send the command to the EV3
