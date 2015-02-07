@@ -43,6 +43,11 @@ module EV3
       self.connection.disconnect if connected?
     end
     
+    def firmware_version
+      brick.execute(_firmware_version)
+      @firmware_version
+    end
+    
     ############################################################################
     #
     # Devices
@@ -178,14 +183,155 @@ module EV3
     def stop_polling_buttons
       @stop_polling = true
     end
+    
+    ############################################################################
+    #
+    # Drawing
+    #
+
+    def update_screen
+      if @update
+        @update << _update_screen
+        self.execute(@update)
+        @update = nil
+      else
+        self.execute(_update_screen)
+      end
+    end
+
+    def start_screen_update
+      @update ||= []
+    end
+
+    def clean_screen
+      if @update
+        @update << _clean_screen
+      else 
+        self.execute([_clean_screen, _update_screen])
+      end
+    end
+
+    def top_line(trueOrFalse)
+      if @update
+        @update << _top_line(trueOrFalse)
+      else 
+        self.execute([_top_line(trueOrFalse), _update_screen])
+      end
+    end
+
+    def draw_line(color, x0, y0, x1, y1)
+      if @update
+        @update << _draw_line(color, x0, y0, x1, y1)
+      else 
+        self.execute([_draw_line(color, x0, y0, x1, y1), _update_screen])
+      end
+    end
+
+    def draw_dot_line(color, x0, y0, x1, y1, on_pixels, off_pixels)
+      if @update
+        @update << _draw_dot_line(color, x0, y0, x1, y1, on_pixels, off_pixels)
+      else 
+        self.execute([_draw_dot_line(color, x0, y0, x1, y1, on_pixels, off_pixels), _update_screen])
+      end
+    end
+
+    def draw_pixel(color, x, y)
+      if @update
+        @update << _draw_pixel(color, x, y)
+      else 
+        self.execute([_draw_pixel(color, x, y), _update_screen])
+      end
+    end
+
+    def draw_rectangle(color, x, y, width, height)
+      if @update
+        @update << _draw_rectangle(color, x, y, width, height)
+      else 
+        self.execute([_draw_rectangle(color, x, y, width, height), _update_screen])
+      end
+    end
+
+    def draw_filled_rectangle(color, x, y, width, height)
+      if @update
+        @update << _draw_filled_rectangle(color, x, y, width, height)
+      else 
+        self.execute([_draw_filled_rectangle(color, x, y, width, height), _update_screen])
+      end
+    end
+
+    def draw_inverse_rectangle(color, x, y, width, height)
+      if @update
+        @update << _draw_inverse_rectangle(color, x, y, width, height)
+      else 
+        self.execute([_draw_inverse_rectangle(color, x, y, width, height), _update_screen])
+      end
+    end
+
+    def draw_circle(color, x, y, radius)
+      if @update
+        @update << _draw_circle(color, x, y, radius)
+      else 
+        self.execute([_draw_circle(color, x, y, radius), _update_screen])
+      end
+    end
+
+    def draw_filled_circle(color, x, y, radius)
+      if @update
+        @update << _draw_filled_circle(color, x, y, radius)
+      else 
+        self.execute([_draw_filled_circle(color, x, y, radius), _update_screen])
+      end
+    end
+
+    def draw_text(color, x, y, text)
+      if @update
+        @update << _draw_text(color, x, y, text)
+      else 
+        self.execute([_draw_text(color, x, y, text), _update_screen])
+      end
+    end
+    
+    def select_font(font)
+      if @update
+        @update << _select_font(font)
+      else 
+        self.execute([_select_font(font), _update_screen])
+      end
+    end
+    
+#		BMP_FILE = 0x1c
+    
+    ############################################################################
+    #
+    # Files
+    #
+      
+    def create_dir(path)
+      # Only have permission in "/home/root/lms2012/prjs/"
+      c = _create_dir(path)
+      self.execute(c)
+      true
+    end
+          
+    def delete_file(path)
+      c = _delete_file(path)
+      self.execute(c)
+      true
+    end
+          
+    def list_files(path)
+      c = _list_files(path)
+      self.execute(c)
+      puts c.replies[3]      
+    end
           
     ############################################################################
     #
     # Execute a command
     #
     # @param [instance subclassing Commands::Base] command to execute
-    def execute(command)
-      command = Command.new.add_component(command) if command.is_a?(CommandComponent) or command.is_a?(Array)
+    def execute(command, type=:direct)
+      command = Command.new(type).add_component(command) if command.is_a?(CommandComponent) or command.is_a?(Array)
       self.connection.write(command)
       command.reply
     end
