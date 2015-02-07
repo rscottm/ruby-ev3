@@ -5,7 +5,7 @@ module EV3
     include EV3::Validations::Constant
     include EV3::Validations::Type
 
-    attr_reader :reply_size, :replies
+    attr_reader :reply_size, :replies, :type
 
     SIZE_OF = {
                 :boolean => 1,
@@ -40,10 +40,6 @@ module EV3
       @reply_size = 0
     end
     
-    def has_reply?
-      @reply_size != 0
-    end
-
     # Append a byte or multiple bytes to the command
     #
     # @param [Integer, Array<Integer>] byte_or_bytes to append to the command
@@ -63,7 +59,7 @@ module EV3
       self
     end
 
-    def to_bytes(index=0)
+    def to_bytes(index=0, command_type=:direct)
       @bytes = []
 
       self << @type
@@ -73,16 +69,18 @@ module EV3
         value = value_or_getter.is_a?(Symbol) ? @object.send(value_or_getter) : value_or_getter
         value = [value] unless value.is_a?(Array)
         value.each do |v|
-          self << ArgumentType.const_get(type.to_s.upcase)
+          self << ArgumentType.const_get(type.to_s.upcase) if command_type == :direct
           v = v.to_ev3_data if type == :boolean
-          self << v.to_little_endian_byte_array(SIZE_OF[type])
+          self << (type == :string ? v.unpack("U*").push(0) : v.to_little_endian_byte_array(SIZE_OF[type]))
         end
       end
 
       @reply_types.each do |type, setter, buffer_or_array_size|
-        self << ArgumentType::GLOBAL_INDEX
-        self << index
-        index += buffer_or_array_size > 0 ? (buffer_or_array_size * SIZE_OF[type]) : SIZE_OF[type]
+        if command_type == :direct
+          self << ArgumentType::GLOBAL_INDEX
+          self << index
+          index += buffer_or_array_size > 0 ? (buffer_or_array_size * SIZE_OF[type]) : SIZE_OF[type]
+        end
       end
       @bytes
     end
@@ -90,14 +88,16 @@ module EV3
     def reply=(bytes)
       @replies = []
       index = 0
+      
       @reply_types.each do |type, setter, buffer_or_array_size|
         size = buffer_or_array_size > 0 ? (buffer_or_array_size * SIZE_OF[type]) : SIZE_OF[type]
         data = bytes[index..(index + size - 1)]
-        data = data[0..(data.find_index(0))] if type == :string 
-        data = data.pack("C*")
         if type == :string
+          data = data[0..(data.find_index(0))] if data.find_index(0)
+          data = data.pack("C*")
           data.strip!
         else
+          data = data.pack("C*")
           data = data.unpack(UNPACK_CONVERSION[type])
           data = data[0] if buffer_or_array_size == 0 
           data = data == 1 if type == :boolean
@@ -109,6 +109,10 @@ module EV3
       @replies
     end
     
+    def has_reply?
+      @reply_size != 0
+    end
+
     def replies
       @replies
     end
