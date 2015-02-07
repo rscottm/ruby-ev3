@@ -147,9 +147,12 @@ module EV3
     STRING = 0x7D
     MEMORY_WRITE = 0x7E
     MEMORY_READ = 0x7F
+    # system
+    FIRMWARE_VERSION = 0x81
     # UI
 		UI_LED = 0x82
 		UI_BUTTON = 0x83
+		UI_DRAW = 0x84
     # Sound
     SOUND = 0x94
     SOUND_TEST = 0x95
@@ -202,6 +205,10 @@ module EV3
     MAILBOX_CLOSE = 0xDD
   end
   
+  module SystemSubCodes
+    READ = 0x0a
+  end
+
   module LedSubCodes
     WRITE = 0x1b
   end
@@ -293,6 +300,24 @@ module EV3
     INIT32 = 10
     INIT_F = 11
     SIZE = 12
+  end
+  
+  module DrawSubCodes
+    UPDATE = 0x00
+		CLEAN = 0x01
+		PIXEL = 0x02
+		LINE = 0x03
+		CIRCLE = 0x04
+		TEXT = 0x05
+		FILL_RECT = 0x09
+		RECT = 0x0a
+		INVERSE_RECT = 0x10
+		SELECT_FONT = 0x11
+		TOP_LINE = 0x12
+		FILL_WINDOW = 0x13
+		DOT_LINE = 0x15
+		FILL_CIRCLE = 0x18
+		BMP_FILE = 0x1c
   end
   
   module LedPattern
